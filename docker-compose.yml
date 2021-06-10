@@ -2,11 +2,33 @@ version: '3.1'
 
 services:
 
-  wordpress:
-    image: wordpress
+  nginx:
+    image: nginx:1.19.2-alpine
     restart: always
     ports:
       - 80:80
+      - 443:443
+    networks:
+      - backend
+    volumes:
+      - ./nginx/etc/nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/etc/letsencrypt:/etc/letsencrypt
+      - ./nginx/var/www/html:/var/www/html
+
+  certbot:
+    image: certbot/certbot:v1.7.0
+    volumes:
+      - ./nginx/etc/letsencrypt:/etc/letsencrypt
+      - ./nginx/var/www/html:/var/www/html
+    command: ["--version"]
+
+  wordpress:
+    image: wordpress
+    restart: always
+    #ports:
+    #  - 80:80
+    networks:
+      - backend
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: exampleuser
@@ -25,3 +47,8 @@ services:
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
     volumes:
       - ./db:/var/lib/mysql
+    networks:
+      - backend
+
+networks:
+  backend:
